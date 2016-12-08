@@ -3,7 +3,7 @@
 import Router from 'koa-router';
 import { getAllMedicines, getMedicineById, addMedicine, removeMedicineById, updateMedicineById } from './controllers';
 
-const router = new Router({ prefix: '/medicines'});
+const router = new Router({ prefix: '/medicines' });
 
 router
   .get('/', getAllMedicines)

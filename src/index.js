@@ -3,7 +3,7 @@ import type { ListenOptions } from './typedefs';
 
 import Koa from 'koa';
 import bodyParser from 'koa-bodyparser';
-import router from './medicines/router';
+import router from './router';
 import config from './config';
 
 const app = new Koa();

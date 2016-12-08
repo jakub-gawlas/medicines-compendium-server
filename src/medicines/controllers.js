@@ -74,12 +74,6 @@ export async function removeMedicineById(ctx: Context, next: Next): Promise<any>
     const id: string = ctx.params.id;
     const result = await removeById(id);
 
-    if(!result){
-      ctx.status = 400;
-      ctx.body = { message: `Cannot find medicine with id=${id}.` };
-      return;
-    }
-
     ctx.body = result;
   }
   catch(err){

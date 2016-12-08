@@ -1,7 +1,6 @@
 // @flow
 
-import { Schema } from 'mongoose';
-import mongoose from '../services/mongodb';
+import { MedicineModel, ContraindicationModel }  from '../services/mongodb';
 
 export type Medicine = {
   id: string,
@@ -14,24 +13,12 @@ export type Interactions = {
   contraindications: string[]
 }
 
-const MedicineModelSchema = new Schema({
-  name: String,
-  interactions: {
-    medicines: [String],
-    contraindications: [String]
-  }
-}, { 
-  versionKey: false 
-});
-
-const MedicineModel = mongoose.model('Medicine', MedicineModelSchema);
-
 /**
  * Return all medicines from database
  */
 export async function getAll(): Promise<Medicine[]> {
 
-  const result = await MedicineModel.find().exec();
+  const result = await MedicineModel.find();
 
   return result.map(_modelToMedicine);
 }
@@ -53,19 +40,20 @@ export async function getById(id: string): Promise<Medicine | null> {
  */
 export async function add({ name, interactions }: { name: string, interactions: Interactions }): Promise<Medicine> {
 
-  const medicinesInteraction = await _getValidMedicinesIds(interactions.medicines);
+  const medicinesInteractions = await _getValidMedicinesIds(interactions.medicines);
+  const contraindicationsInteractions = await _getValidContraindicationsIds(interactions.contraindications);
   
   const newMedicineValues = {
     name,
     interactions: {
-      medicines: medicinesInteraction,
-      contraindications: interactions.contraindications
+      medicines: medicinesInteractions,
+      contraindications: contraindicationsInteractions
     }
   };
   const newMedicine = new MedicineModel(newMedicineValues);
   const result = _modelToMedicine(await newMedicine.save());
 
-  _addMedicinesInteraction(medicinesInteraction, result.id);
+  _addMedicinesInteraction(medicinesInteractions, result.id);
 
   return result;
 }
@@ -73,9 +61,11 @@ export async function add({ name, interactions }: { name: string, interactions: 
 /**
  * Remove medicine from database , which has _id equal to passed param `id`
  */
-export async function removeById(id: string){
+export async function removeById(id: string): Promise<Medicine> {
 
   const medicine = await MedicineModel.findById(id);
+
+  if(!medicine) throw Error(`Medicine not exists.`);
 
   _removeMedicinesInteraction(medicine.interactions.medicines, medicine.id);
 
@@ -90,6 +80,7 @@ export async function updateById(id: string, { name, interactions }: { name: str
   const medicine = await MedicineModel.findById(id);
 
   const medicinesInteractions = await _getValidMedicinesIds(interactions.medicines);
+  const contraindicationsInteractions = await _getValidContraindicationsIds(interactions.contraindications);
 
   const addedMedicinesInteractions = _subtractArrays(medicinesInteractions, medicine.interactions.medicines);
   _addMedicinesInteraction(addedMedicinesInteractions, id);
@@ -100,7 +91,7 @@ export async function updateById(id: string, { name, interactions }: { name: str
   medicine.name = name;
   medicine.interactions = {
     medicines: medicinesInteractions,
-    contraindications: interactions.contraindications
+    contraindications: contraindicationsInteractions
   };
   const result = await medicine.save();
 
@@ -136,7 +127,7 @@ function _removeMedicinesInteraction(medicinesIds: string[] = [], medicineIntera
 }
 
 /**
- * Return array of only valid medicines ids passed as `medicinesIds`, which are present in database
+ * Return array of only valid medicines ids (which are present in database) from `medicinesIds`
  */
 async function _getValidMedicinesIds(medicinesIds: string[]): Promise<string[]> {
 
@@ -144,6 +135,19 @@ async function _getValidMedicinesIds(medicinesIds: string[]): Promise<string[]> 
   const allMedicinesIds = allMedicines.map(({ id }) => id);
   
   const result = medicinesIds.filter((id) => allMedicinesIds.includes(id));
+
+  return result;
+}
+
+/**
+ * Return array of only valid contraindications ids (which are present in database) from `contraindicationsIds`
+ */
+async function _getValidContraindicationsIds(contraindicationsIds: string[]): Promise<string[]> {
+  
+  const allContraindications = await ContraindicationModel.find();
+  const allContraindicationsIds = allContraindications.map(({ id }) => id);
+
+  const result = contraindicationsIds.filter((id) => allContraindicationsIds.includes(id));
 
   return result;
 }

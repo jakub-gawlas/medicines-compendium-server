@@ -2,10 +2,20 @@
 
 import Router from 'koa-router';
 import medicinesRouter from './medicines/router';
+import contraindicationsRouter from './contraindications/router';
 
-const router: Router = new Router();
+const router = _concatRouters(
+  medicinesRouter, 
+  contraindicationsRouter
+);
 
-router
-  .use(medicinesRouter);
+function _concatRouters(...routers: Router[]): Router {
+  return routers.reduce(
+    (resultRouter, router) => {
+      return resultRouter.use(router.routes(), router.allowedMethods());
+    }, 
+    new Router()
+  );
+}
 
 export default router;
