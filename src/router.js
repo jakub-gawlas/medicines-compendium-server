@@ -1,10 +1,12 @@
 // @flow
 
 import Router from 'koa-router';
+import usersRouter from './users/router';
 import medicinesRouter from './medicines/router';
 import contraindicationsRouter from './contraindications/router';
 
 const router = _concatRouters(
+  usersRouter,
   medicinesRouter, 
   contraindicationsRouter
 );

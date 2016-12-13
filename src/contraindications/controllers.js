@@ -55,6 +55,6 @@ export async function removeContraindicationById(ctx: Context, next: Next): Prom
     console.error(err);
 
     ctx.status = 400;
-    ctx.body = { message: `Cannot remove medicine.` }; 
+    ctx.body = { message: `Cannot remove contraindication.` }; 
   }
 }

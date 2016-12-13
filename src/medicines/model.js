@@ -75,7 +75,7 @@ export async function removeById(id: string): Promise<Medicine> {
 /**
  * Update medicine, which has _id equal to passed param `id`
  */
-export async function updateById(id: string, { name, interactions }: { name: string, interactions: Interactions }): Promise<Medicine> {
+export async function updateById(id: string, { name, interactions }: { name: string, interactions: Interactions }): Promise<{ updatedMedicine: Medicine, changedMedicines: { interactions: { added: string[], removed: string[] } } }> {
 
   const medicine = await MedicineModel.findById(id);
 
@@ -93,9 +93,19 @@ export async function updateById(id: string, { name, interactions }: { name: str
     medicines: medicinesInteractions,
     contraindications: contraindicationsInteractions
   };
-  const result = await medicine.save();
+  const updatedMedicine = await medicine.save();
 
-  return _modelToMedicine(result);
+  const result = {
+    updatedMedicine: _modelToMedicine(updatedMedicine),
+    changedMedicines: {
+      interactions: {
+        added: addedMedicinesInteractions,
+        removed: removedMedicinesInteractions
+      }
+    }
+  };
+
+  return result;
 }
 
 /**
